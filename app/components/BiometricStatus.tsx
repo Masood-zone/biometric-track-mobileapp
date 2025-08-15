@@ -1,71 +1,84 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native"
-import { BiometricService, type BiometricCapabilities } from "../services/biometricService"
-import { colors } from "../constants/colors"
-import Card from "./Card"
+import { useEffect, useState } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { colors } from "../constants/colors";
+import {
+  BiometricService,
+  type BiometricCapabilities,
+} from "../services/biometricService";
+import Card from "./Card";
 
 interface BiometricStatusProps {
-  onPress?: () => void
+  onPress?: () => void;
 }
 
 export default function BiometricStatus({ onPress }: BiometricStatusProps) {
-  const [capabilities, setCapabilities] = useState<BiometricCapabilities | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [capabilities, setCapabilities] =
+    useState<BiometricCapabilities | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    checkCapabilities()
-  }, [])
+    checkCapabilities();
+  }, []);
 
   const checkCapabilities = async () => {
     try {
-      setLoading(true)
-      const caps = await BiometricService.checkCapabilities()
-      setCapabilities(caps)
+      setLoading(true);
+      const caps = await BiometricService.checkCapabilities();
+      setCapabilities(caps);
     } catch (error) {
-      console.error("Error checking biometric capabilities:", error)
+      console.error("Error checking biometric capabilities:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const getStatusColor = () => {
-    if (!capabilities?.hasHardware) return colors.gray[400]
-    if (!capabilities?.isEnrolled) return colors.warning
-    return colors.success
-  }
+    if (!capabilities?.hasHardware) return colors.gray[400];
+    if (!capabilities?.isEnrolled) return colors.warning;
+    return colors.success;
+  };
 
   const getStatusText = () => {
-    if (loading) return "Checking..."
-    if (!capabilities?.hasHardware) return "Not Available"
-    if (!capabilities?.isEnrolled) return "Not Set Up"
-    return "Ready"
-  }
+    if (loading) return "Checking...";
+    if (!capabilities?.hasHardware) return "Not Available";
+    if (!capabilities?.isEnrolled) return "Not Set Up";
+    return "Ready";
+  };
 
   const getStatusDescription = () => {
-    if (loading) return "Checking biometric capabilities..."
-    if (!capabilities?.hasHardware) return "This device doesn't support biometric authentication"
-    if (!capabilities?.isEnrolled) return "Set up biometric authentication in device settings"
-    return `${BiometricService.getBiometricTypeString(capabilities.supportedTypes)} is ready for use`
-  }
+    if (loading) return "Checking biometric capabilities...";
+    if (!capabilities?.hasHardware)
+      return "This device doesn't support biometric authentication";
+    if (!capabilities?.isEnrolled)
+      return "Set up biometric authentication in device settings";
+    return `${BiometricService.getBiometricTypeString(
+      capabilities.supportedTypes
+    )} is ready for use`;
+  };
 
-  const Component = onPress ? TouchableOpacity : View
+  const Component = onPress ? TouchableOpacity : View;
 
   return (
     <Component onPress={onPress} style={onPress && styles.touchable}>
       <Card style={styles.container}>
         <View style={styles.content}>
           <View style={styles.header}>
-            <View style={[styles.statusIndicator, { backgroundColor: getStatusColor() }]} />
+            <View
+              style={[
+                styles.statusIndicator,
+                { backgroundColor: getStatusColor() },
+              ]}
+            />
             <Text style={styles.title}>Biometric Authentication</Text>
           </View>
-          <Text style={[styles.status, { color: getStatusColor() }]}>{getStatusText()}</Text>
+          <Text style={[styles.status, { color: getStatusColor() }]}>
+            {getStatusText()}
+          </Text>
           <Text style={styles.description}>{getStatusDescription()}</Text>
         </View>
       </Card>
     </Component>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -102,4 +115,4 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     lineHeight: 16,
   },
-})
+});

@@ -1,76 +1,81 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity } from "react-native"
-import { doc, getDoc, updateDoc } from "firebase/firestore"
-import { db } from "../../../services/firebase"
-import { useAuth } from "../../../contexts/auth/AuthContext"
-import { colors } from "../../../constants/colors"
-import Card from "../../../components/Card"
-import FormInput from "../../../components/FormInput"
-import Button from "../../../components/Button"
-import LoadingSpinner from "../../../components/LoadingSpinner"
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import Button from "../../../components/Button";
+import Card from "../../../components/Card";
+import FormInput from "../../../components/FormInput";
+import LoadingSpinner from "../../../components/LoadingSpinner";
+import { colors } from "../../../constants/colors";
+import { useAuth } from "../../../contexts/auth/AuthContext";
+import { db } from "../../../services/firebase";
 
 interface AdminProfile {
-  name: string
-  email: string
-  phone: string
-  role: string
-  createdAt?: any
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  createdAt?: any;
 }
 
 export default function ProfileScreen() {
-  const [profile, setProfile] = useState<AdminProfile | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [editing, setEditing] = useState(false)
-  const [saving, setSaving] = useState(false)
+  const [profile, setProfile] = useState<AdminProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // Form state
-  const [name, setName] = useState("")
-  const [phone, setPhone] = useState("")
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
 
-  const { user, logout } = useAuth()
+  const { user, logout } = useAuth();
 
   useEffect(() => {
-    fetchProfile()
-  }, [])
+    fetchProfile();
+  }, []);
 
   const fetchProfile = async () => {
-    if (!user) return
+    if (!user) return;
 
     try {
-      setLoading(true)
-      const docRef = doc(db, "users", user.uid)
-      const docSnap = await getDoc(docRef)
+      setLoading(true);
+      const docRef = doc(db, "users", user.uid);
+      const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        const profileData = docSnap.data() as AdminProfile
-        setProfile(profileData)
-        setName(profileData.name || "")
-        setPhone(profileData.phone || "")
+        const profileData = docSnap.data() as AdminProfile;
+        setProfile(profileData);
+        setName(profileData.name || "");
+        setPhone(profileData.phone || "");
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to fetch profile")
+      Alert.alert("Error", "Failed to fetch profile");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleSave = async () => {
     if (!user || !name.trim()) {
-      Alert.alert("Error", "Name is required")
-      return
+      Alert.alert("Error", "Name is required");
+      return;
     }
 
     try {
-      setSaving(true)
-      const docRef = doc(db, "users", user.uid)
+      setSaving(true);
+      const docRef = doc(db, "users", user.uid);
 
       await updateDoc(docRef, {
         name: name.trim(),
         phone: phone.trim(),
         updatedAt: new Date(),
-      })
+      });
 
       // Update local state
       if (profile) {
@@ -78,17 +83,17 @@ export default function ProfileScreen() {
           ...profile,
           name: name.trim(),
           phone: phone.trim(),
-        })
+        });
       }
 
-      setEditing(false)
-      Alert.alert("Success", "Profile updated successfully")
+      setEditing(false);
+      Alert.alert("Success", "Profile updated successfully");
     } catch (error) {
-      Alert.alert("Error", "Failed to update profile")
+      Alert.alert("Error", "Failed to update profile");
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   const handleLogout = async () => {
     Alert.alert("Logout", "Are you sure you want to logout?", [
@@ -98,17 +103,17 @@ export default function ProfileScreen() {
         style: "destructive",
         onPress: async () => {
           try {
-            await logout()
+            await logout();
           } catch (error) {
-            Alert.alert("Error", "Failed to logout")
+            Alert.alert("Error", "Failed to logout");
           }
         },
       },
-    ])
-  }
+    ]);
+  };
 
   if (loading) {
-    return <LoadingSpinner />
+    return <LoadingSpinner />;
   }
 
   if (!profile) {
@@ -116,7 +121,7 @@ export default function ProfileScreen() {
       <View style={styles.container}>
         <Text style={styles.errorText}>Profile not found</Text>
       </View>
-    )
+    );
   }
 
   return (
@@ -135,7 +140,12 @@ export default function ProfileScreen() {
       <Card style={styles.profileCard}>
         {editing ? (
           <View style={styles.editForm}>
-            <FormInput label="Full Name" value={name} onChangeText={setName} placeholder="Enter your full name" />
+            <FormInput
+              label="Full Name"
+              value={name}
+              onChangeText={setName}
+              placeholder="Enter your full name"
+            />
 
             <FormInput
               label="Phone Number"
@@ -150,9 +160,9 @@ export default function ProfileScreen() {
                 title="Cancel"
                 variant="secondary"
                 onPress={() => {
-                  setEditing(false)
-                  setName(profile.name || "")
-                  setPhone(profile.phone || "")
+                  setEditing(false);
+                  setName(profile.name || "");
+                  setPhone(profile.phone || "");
                 }}
                 style={styles.actionButton}
               />
@@ -189,7 +199,10 @@ export default function ProfileScreen() {
             {profile.createdAt && (
               <View style={styles.infoRow}>
                 <Text style={styles.label}>Member Since</Text>
-                <Text style={styles.value}>{profile.createdAt.toDate?.()?.toLocaleDateString() || "Unknown"}</Text>
+                <Text style={styles.value}>
+                  {profile.createdAt.toDate?.()?.toLocaleDateString() ||
+                    "Unknown"}
+                </Text>
               </View>
             )}
           </View>
@@ -197,9 +210,14 @@ export default function ProfileScreen() {
       </Card>
 
       {/* Logout Button */}
-      <Button title="Logout" variant="danger" onPress={handleLogout} style={styles.logoutButton} />
+      <Button
+        title="Logout"
+        variant="danger"
+        onPress={handleLogout}
+        style={styles.logoutButton}
+      />
     </ScrollView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -266,4 +284,4 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 50,
   },
-})
+});

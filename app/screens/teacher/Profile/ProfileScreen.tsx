@@ -1,80 +1,85 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity } from "react-native"
-import { doc, getDoc, updateDoc } from "firebase/firestore"
-import { db } from "../../../services/firebase"
-import { useAuth } from "../../../contexts/auth/AuthContext"
-import { colors } from "../../../constants/colors"
-import Card from "../../../components/Card"
-import FormInput from "../../../components/FormInput"
-import Button from "../../../components/Button"
-import LoadingSpinner from "../../../components/LoadingSpinner"
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import Button from "../../../components/Button";
+import Card from "../../../components/Card";
+import FormInput from "../../../components/FormInput";
+import LoadingSpinner from "../../../components/LoadingSpinner";
+import { colors } from "../../../constants/colors";
+import { useAuth } from "../../../contexts/auth/AuthContext";
+import { db } from "../../../services/firebase";
 
 interface TeacherProfile {
-  name: string
-  email: string
-  phone: string
-  subject: string
-  role: string
-  createdAt?: any
+  name: string;
+  email: string;
+  phone: string;
+  subject: string;
+  role: string;
+  createdAt?: any;
 }
 
 export default function ProfileScreen() {
-  const [profile, setProfile] = useState<TeacherProfile | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [editing, setEditing] = useState(false)
-  const [saving, setSaving] = useState(false)
+  const [profile, setProfile] = useState<TeacherProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // Form state
-  const [name, setName] = useState("")
-  const [phone, setPhone] = useState("")
-  const [subject, setSubject] = useState("")
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [subject, setSubject] = useState("");
 
-  const { user, logout } = useAuth()
+  const { user, logout } = useAuth();
 
   useEffect(() => {
-    fetchProfile()
-  }, [])
+    fetchProfile();
+  }, []);
 
   const fetchProfile = async () => {
-    if (!user) return
+    if (!user) return;
 
     try {
-      setLoading(true)
-      const docRef = doc(db, "users", user.uid)
-      const docSnap = await getDoc(docRef)
+      setLoading(true);
+      const docRef = doc(db, "users", user.uid);
+      const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        const profileData = docSnap.data() as TeacherProfile
-        setProfile(profileData)
-        setName(profileData.name || "")
-        setPhone(profileData.phone || "")
-        setSubject(profileData.subject || "")
+        const profileData = docSnap.data() as TeacherProfile;
+        setProfile(profileData);
+        setName(profileData.name || "");
+        setPhone(profileData.phone || "");
+        setSubject(profileData.subject || "");
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to fetch profile")
+      Alert.alert("Error", "Failed to fetch profile");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleSave = async () => {
     if (!user || !name.trim() || !subject.trim()) {
-      Alert.alert("Error", "Name and subject are required")
-      return
+      Alert.alert("Error", "Name and subject are required");
+      return;
     }
 
     try {
-      setSaving(true)
-      const docRef = doc(db, "users", user.uid)
+      setSaving(true);
+      const docRef = doc(db, "users", user.uid);
 
       await updateDoc(docRef, {
         name: name.trim(),
         phone: phone.trim(),
         subject: subject.trim(),
         updatedAt: new Date(),
-      })
+      });
 
       // Update local state
       if (profile) {
@@ -83,17 +88,17 @@ export default function ProfileScreen() {
           name: name.trim(),
           phone: phone.trim(),
           subject: subject.trim(),
-        })
+        });
       }
 
-      setEditing(false)
-      Alert.alert("Success", "Profile updated successfully")
+      setEditing(false);
+      Alert.alert("Success", "Profile updated successfully");
     } catch (error) {
-      Alert.alert("Error", "Failed to update profile")
+      Alert.alert("Error", "Failed to update profile");
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   const handleLogout = async () => {
     Alert.alert("Logout", "Are you sure you want to logout?", [
@@ -103,17 +108,17 @@ export default function ProfileScreen() {
         style: "destructive",
         onPress: async () => {
           try {
-            await logout()
+            await logout();
           } catch (error) {
-            Alert.alert("Error", "Failed to logout")
+            Alert.alert("Error", "Failed to logout");
           }
         },
       },
-    ])
-  }
+    ]);
+  };
 
   if (loading) {
-    return <LoadingSpinner />
+    return <LoadingSpinner />;
   }
 
   if (!profile) {
@@ -121,7 +126,7 @@ export default function ProfileScreen() {
       <View style={styles.container}>
         <Text style={styles.errorText}>Profile not found</Text>
       </View>
-    )
+    );
   }
 
   return (
@@ -140,7 +145,12 @@ export default function ProfileScreen() {
       <Card style={styles.profileCard}>
         {editing ? (
           <View style={styles.editForm}>
-            <FormInput label="Full Name" value={name} onChangeText={setName} placeholder="Enter your full name" />
+            <FormInput
+              label="Full Name"
+              value={name}
+              onChangeText={setName}
+              placeholder="Enter your full name"
+            />
 
             <FormInput
               label="Phone Number"
@@ -150,17 +160,22 @@ export default function ProfileScreen() {
               keyboardType="phone-pad"
             />
 
-            <FormInput label="Subject" value={subject} onChangeText={setSubject} placeholder="Enter subject taught" />
+            <FormInput
+              label="Subject"
+              value={subject}
+              onChangeText={setSubject}
+              placeholder="Enter subject taught"
+            />
 
             <View style={styles.formActions}>
               <Button
                 title="Cancel"
                 variant="secondary"
                 onPress={() => {
-                  setEditing(false)
-                  setName(profile.name || "")
-                  setPhone(profile.phone || "")
-                  setSubject(profile.subject || "")
+                  setEditing(false);
+                  setName(profile.name || "");
+                  setPhone(profile.phone || "");
+                  setSubject(profile.subject || "");
                 }}
                 style={styles.actionButton}
               />
@@ -176,7 +191,9 @@ export default function ProfileScreen() {
           <View style={styles.profileInfo}>
             <View style={styles.avatarSection}>
               <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{profile.name?.charAt(0)?.toUpperCase() || "T"}</Text>
+                <Text style={styles.avatarText}>
+                  {profile.name?.charAt(0)?.toUpperCase() || "T"}
+                </Text>
               </View>
               <Text style={styles.userName}>{profile.name}</Text>
               <Text style={styles.userRole}>Teacher</Text>
@@ -201,7 +218,10 @@ export default function ProfileScreen() {
               {profile.createdAt && (
                 <View style={styles.infoRow}>
                   <Text style={styles.label}>Member Since</Text>
-                  <Text style={styles.value}>{profile.createdAt.toDate?.()?.toLocaleDateString() || "Unknown"}</Text>
+                  <Text style={styles.value}>
+                    {profile.createdAt.toDate?.()?.toLocaleDateString() ||
+                      "Unknown"}
+                  </Text>
                 </View>
               )}
             </View>
@@ -223,14 +243,21 @@ export default function ProfileScreen() {
               <Text style={styles.statLabel}>This Month</Text>
             </View>
           </View>
-          <Text style={styles.statsNote}>Attendance statistics will be available soon</Text>
+          <Text style={styles.statsNote}>
+            Attendance statistics will be available soon
+          </Text>
         </Card>
       )}
 
       {/* Logout Button */}
-      <Button title="Logout" variant="danger" onPress={handleLogout} style={styles.logoutButton} />
+      <Button
+        title="Logout"
+        variant="danger"
+        onPress={handleLogout}
+        style={styles.logoutButton}
+      />
     </ScrollView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -364,4 +391,4 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 50,
   },
-})
+});

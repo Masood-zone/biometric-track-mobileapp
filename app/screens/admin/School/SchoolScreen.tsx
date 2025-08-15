@@ -1,76 +1,93 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Modal, ScrollView } from "react-native"
-import { collection, getDocs, addDoc, query, where } from "firebase/firestore"
-import { createUserWithEmailAndPassword } from "firebase/auth"
-import { auth, db } from "../../../services/firebase"
-import { colors } from "../../../constants/colors"
-import Card from "../../../components/Card"
-import Button from "../../../components/Button"
-import FormInput from "../../../components/FormInput"
-import LoadingSpinner from "../../../components/LoadingSpinner"
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import {
+  Alert,
+  FlatList,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import Button from "../../../components/Button";
+import Card from "../../../components/Card";
+import FormInput from "../../../components/FormInput";
+import LoadingSpinner from "../../../components/LoadingSpinner";
+import { colors } from "../../../constants/colors";
+import { auth, db } from "../../../services/firebase";
 
 interface Teacher {
-  id: string
-  name: string
-  email: string
-  phone: string
-  subject: string
-  role: string
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  subject: string;
+  role: string;
 }
 
 export default function SchoolScreen() {
-  const [teachers, setTeachers] = useState<Teacher[]>([])
-  const [loading, setLoading] = useState(true)
-  const [modalVisible, setModalVisible] = useState(false)
-  const [addingTeacher, setAddingTeacher] = useState(false)
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [addingTeacher, setAddingTeacher] = useState(false);
 
   // Form state
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [phone, setPhone] = useState("")
-  const [subject, setSubject] = useState("")
-  const [password, setPassword] = useState("")
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [subject, setSubject] = useState("");
+  const [password, setPassword] = useState("");
 
   useEffect(() => {
-    fetchTeachers()
-  }, [])
+    fetchTeachers();
+  }, []);
 
   const fetchTeachers = async () => {
     try {
-      setLoading(true)
-      const q = query(collection(db, "users"), where("role", "==", "teacher"))
-      const querySnapshot = await getDocs(q)
+      setLoading(true);
+      const q = query(collection(db, "users"), where("role", "==", "teacher"));
+      const querySnapshot = await getDocs(q);
 
-      const teachersList: Teacher[] = []
+      const teachersList: Teacher[] = [];
       querySnapshot.forEach((doc) => {
         teachersList.push({
           id: doc.id,
           ...doc.data(),
-        } as Teacher)
-      })
+        } as Teacher);
+      });
 
-      setTeachers(teachersList)
+      setTeachers(teachersList);
     } catch (error) {
-      Alert.alert("Error", "Failed to fetch teachers")
+      Alert.alert("Error", "Failed to fetch teachers");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleAddTeacher = async () => {
-    if (!name.trim() || !email.trim() || !phone.trim() || !subject.trim() || !password.trim()) {
-      Alert.alert("Error", "Please fill in all fields")
-      return
+    if (
+      !name.trim() ||
+      !email.trim() ||
+      !phone.trim() ||
+      !subject.trim() ||
+      !password.trim()
+    ) {
+      Alert.alert("Error", "Please fill in all fields");
+      return;
     }
 
     try {
-      setAddingTeacher(true)
+      setAddingTeacher(true);
 
       // Create Firebase Auth account
-      const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password)
-      const user = userCredential.user
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email.trim(),
+        password
+      );
+      const user = userCredential.user;
 
       // Add teacher to Firestore
       await addDoc(collection(db, "users"), {
@@ -81,26 +98,26 @@ export default function SchoolScreen() {
         subject: subject.trim(),
         role: "teacher",
         createdAt: new Date(),
-      })
+      });
 
       // Reset form
-      setName("")
-      setEmail("")
-      setPhone("")
-      setSubject("")
-      setPassword("")
-      setModalVisible(false)
+      setName("");
+      setEmail("");
+      setPhone("");
+      setSubject("");
+      setPassword("");
+      setModalVisible(false);
 
       // Refresh teachers list
-      await fetchTeachers()
+      await fetchTeachers();
 
-      Alert.alert("Success", "Teacher added successfully")
+      Alert.alert("Success", "Teacher added successfully");
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to add teacher")
+      Alert.alert("Error", error.message || "Failed to add teacher");
     } finally {
-      setAddingTeacher(false)
+      setAddingTeacher(false);
     }
-  }
+  };
 
   const renderTeacher = ({ item }: { item: Teacher }) => (
     <Card style={styles.teacherCard}>
@@ -111,10 +128,10 @@ export default function SchoolScreen() {
         <Text style={styles.teacherDetails}>Phone: {item.phone}</Text>
       </View>
     </Card>
-  )
+  );
 
   if (loading) {
-    return <LoadingSpinner />
+    return <LoadingSpinner />;
   }
 
   return (
@@ -122,7 +139,10 @@ export default function SchoolScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Teachers</Text>
-        <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => setModalVisible(true)}
+        >
           <Text style={styles.addButtonText}>+ Add Teacher</Text>
         </TouchableOpacity>
       </View>
@@ -137,13 +157,19 @@ export default function SchoolScreen() {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>No teachers found</Text>
-            <Text style={styles.emptySubtext}>Add your first teacher to get started</Text>
+            <Text style={styles.emptySubtext}>
+              Add your first teacher to get started
+            </Text>
           </View>
         }
       />
 
       {/* Add Teacher Modal */}
-      <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet">
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Add New Teacher</Text>
@@ -153,7 +179,12 @@ export default function SchoolScreen() {
           </View>
 
           <ScrollView style={styles.modalContent}>
-            <FormInput label="Full Name" value={name} onChangeText={setName} placeholder="Enter teacher's full name" />
+            <FormInput
+              label="Full Name"
+              value={name}
+              onChangeText={setName}
+              placeholder="Enter teacher's full name"
+            />
 
             <FormInput
               label="Email Address"
@@ -172,7 +203,12 @@ export default function SchoolScreen() {
               keyboardType="phone-pad"
             />
 
-            <FormInput label="Subject" value={subject} onChangeText={setSubject} placeholder="Enter subject taught" />
+            <FormInput
+              label="Subject"
+              value={subject}
+              onChangeText={setSubject}
+              placeholder="Enter subject taught"
+            />
 
             <FormInput
               label="Password"
@@ -192,7 +228,7 @@ export default function SchoolScreen() {
         </View>
       </Modal>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -293,4 +329,4 @@ const styles = StyleSheet.create({
   submitButton: {
     marginTop: 20,
   },
-})
+});

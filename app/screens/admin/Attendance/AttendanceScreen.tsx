@@ -1,59 +1,66 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from "react-native"
-import { useAttendance } from "../../../contexts/attendance/AttendanceContext"
-import { colors } from "../../../constants/colors"
-import { formatDate, getTodayString } from "../../../utils/dateUtils"
-import Card from "../../../components/Card"
-import LoadingSpinner from "../../../components/LoadingSpinner"
+import { useEffect, useState } from "react";
+import {
+  Alert,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import Card from "../../../components/Card";
+import LoadingSpinner from "../../../components/LoadingSpinner";
+import { colors } from "../../../constants/colors";
+import { useAttendance } from "../../../contexts/attendance/AttendanceContext";
+import { formatDate, getTodayString } from "../../../utils/dateUtils";
 
 interface AttendanceRecord {
-  id: string
-  teacherId: string
-  teacherName: string
-  date: string
-  status: "present" | "absent"
-  timestamp: any
+  id: string;
+  teacherId: string;
+  teacherName: string;
+  date: string;
+  status: "present" | "absent";
+  timestamp: any;
 }
 
 export default function AttendanceScreen() {
-  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([])
-  const [selectedDate, setSelectedDate] = useState(getTodayString())
-  const [loading, setLoading] = useState(true)
-  const { getAttendanceByDate } = useAttendance()
+  const [attendanceRecords, setAttendanceRecords] = useState<
+    AttendanceRecord[]
+  >([]);
+  const [selectedDate, setSelectedDate] = useState(getTodayString());
+  const [loading, setLoading] = useState(true);
+  const { getAttendanceByDate } = useAttendance();
 
   useEffect(() => {
-    fetchAttendance()
-  }, [selectedDate])
+    fetchAttendance();
+  }, [selectedDate]);
 
   const fetchAttendance = async () => {
     try {
-      setLoading(true)
-      const records = await getAttendanceByDate(selectedDate)
-      setAttendanceRecords(records)
+      setLoading(true);
+      const records = await getAttendanceByDate(selectedDate);
+      setAttendanceRecords(records);
     } catch (error) {
-      Alert.alert("Error", "Failed to fetch attendance records")
+      Alert.alert("Error", "Failed to fetch attendance records");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const getDateOptions = () => {
-    const dates = []
-    const today = new Date()
+    const dates = [];
+    const today = new Date();
 
     for (let i = 0; i < 7; i++) {
-      const date = new Date(today)
-      date.setDate(today.getDate() - i)
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
       dates.push({
         value: date.toISOString().split("T")[0],
         label: i === 0 ? "Today" : formatDate(date),
-      })
+      });
     }
 
-    return dates
-  }
+    return dates;
+  };
 
   const renderAttendanceRecord = ({ item }: { item: AttendanceRecord }) => (
     <Card style={styles.recordCard}>
@@ -61,30 +68,41 @@ export default function AttendanceScreen() {
         <View style={styles.recordHeader}>
           <Text style={styles.teacherName}>{item.teacherName}</Text>
           <View style={[styles.statusBadge, styles[item.status]]}>
-            <Text style={[styles.statusText, styles[`${item.status}Text`]]}>{item.status.toUpperCase()}</Text>
+            <Text style={[styles.statusText, styles[`${item.status}Text`]]}>
+              {item.status.toUpperCase()}
+            </Text>
           </View>
         </View>
         <Text style={styles.timestamp}>
-          Marked at: {item.timestamp?.toDate?.()?.toLocaleTimeString() || "Unknown time"}
+          Marked at:{" "}
+          {item.timestamp?.toDate?.()?.toLocaleTimeString() || "Unknown time"}
         </Text>
       </View>
     </Card>
-  )
+  );
 
   const renderDateOption = (dateOption: { value: string; label: string }) => (
     <TouchableOpacity
       key={dateOption.value}
-      style={[styles.dateButton, selectedDate === dateOption.value && styles.selectedDateButton]}
+      style={[
+        styles.dateButton,
+        selectedDate === dateOption.value && styles.selectedDateButton,
+      ]}
       onPress={() => setSelectedDate(dateOption.value)}
     >
-      <Text style={[styles.dateButtonText, selectedDate === dateOption.value && styles.selectedDateButtonText]}>
+      <Text
+        style={[
+          styles.dateButtonText,
+          selectedDate === dateOption.value && styles.selectedDateButtonText,
+        ]}
+      >
         {dateOption.label}
       </Text>
     </TouchableOpacity>
-  )
+  );
 
   if (loading) {
-    return <LoadingSpinner />
+    return <LoadingSpinner />;
   }
 
   return (
@@ -97,7 +115,9 @@ export default function AttendanceScreen() {
       {/* Date Filter */}
       <View style={styles.dateFilter}>
         <Text style={styles.filterTitle}>Select Date:</Text>
-        <View style={styles.dateButtons}>{getDateOptions().map(renderDateOption)}</View>
+        <View style={styles.dateButtons}>
+          {getDateOptions().map(renderDateOption)}
+        </View>
       </View>
 
       {/* Attendance List */}
@@ -111,13 +131,14 @@ export default function AttendanceScreen() {
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>No attendance records</Text>
             <Text style={styles.emptySubtext}>
-              No teachers have marked attendance for {formatDate(new Date(selectedDate))}
+              No teachers have marked attendance for{" "}
+              {formatDate(new Date(selectedDate))}
             </Text>
           </View>
         }
       />
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -235,4 +256,4 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingHorizontal: 20,
   },
-})
+});

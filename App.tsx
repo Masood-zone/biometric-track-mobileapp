@@ -1,6 +1,4 @@
-"use client";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { AttendanceProvider } from "./app/contexts/attendance/AttendanceContext";
 import { AuthProvider, useAuth } from "./app/contexts/auth/AuthContext";
@@ -99,9 +97,7 @@ export default function App() {
   return (
     <AuthProvider>
       <AttendanceProvider>
-        <NavigationContainer>
-          <AppNavigator />
-        </NavigationContainer>
+        <AppNavigator />
       </AttendanceProvider>
     </AuthProvider>
   );

@@ -1,19 +1,20 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import { View, Text, StyleSheet, Modal } from "react-native"
-import { BiometricService, type BiometricCapabilities } from "../services/biometricService"
-import { colors } from "../constants/colors"
-import Card from "./Card"
-import Button from "./Button"
+import { useEffect, useState } from "react";
+import { Modal, StyleSheet, Text, View } from "react-native";
+import { colors } from "../constants/colors";
+import {
+  BiometricService,
+  type BiometricCapabilities,
+} from "../services/biometricService";
+import Button from "./Button";
+import Card from "./Card";
 
 interface BiometricPromptProps {
-  visible: boolean
-  onSuccess: () => void
-  onCancel: () => void
-  onError: (error: string) => void
-  title?: string
-  subtitle?: string
+  visible: boolean;
+  onSuccess: () => void;
+  onCancel: () => void;
+  onError: (error: string) => void;
+  title?: string;
+  subtitle?: string;
 }
 
 export default function BiometricPrompt({
@@ -24,62 +25,63 @@ export default function BiometricPrompt({
   title = "Biometric Authentication",
   subtitle = "Use your biometric to authenticate",
 }: BiometricPromptProps) {
-  const [capabilities, setCapabilities] = useState<BiometricCapabilities | null>(null)
-  const [authenticating, setAuthenticating] = useState(false)
+  const [capabilities, setCapabilities] =
+    useState<BiometricCapabilities | null>(null);
+  const [authenticating, setAuthenticating] = useState(false);
 
   useEffect(() => {
     if (visible) {
-      checkBiometricCapabilities()
+      checkBiometricCapabilities();
     }
-  }, [visible])
+  }, [visible]);
 
   const checkBiometricCapabilities = async () => {
     try {
-      const caps = await BiometricService.checkCapabilities()
-      setCapabilities(caps)
+      const caps = await BiometricService.checkCapabilities();
+      setCapabilities(caps);
 
       if (!caps.hasHardware || !caps.isEnrolled) {
         onError(
           !caps.hasHardware
             ? "Biometric authentication not available on this device"
-            : "No biometric credentials enrolled. Please set up biometric authentication in device settings",
-        )
+            : "No biometric credentials enrolled. Please set up biometric authentication in device settings"
+        );
       }
     } catch (error: any) {
-      onError(error.message || "Failed to check biometric capabilities")
+      onError(error.message || "Failed to check biometric capabilities");
     }
-  }
+  };
 
   const handleAuthenticate = async () => {
     if (!capabilities?.hasHardware || !capabilities?.isEnrolled) {
-      return
+      return;
     }
 
     try {
-      setAuthenticating(true)
+      setAuthenticating(true);
       const result = await BiometricService.authenticate({
         promptMessage: subtitle,
         cancelLabel: "Cancel",
         fallbackLabel: "Use Device Passcode",
-      })
+      });
 
       if (result.success) {
-        onSuccess()
+        onSuccess();
       } else {
         if (result.error === "UserCancel") {
-          onCancel()
+          onCancel();
         } else {
-          onError(result.error || "Authentication failed")
+          onError(result.error || "Authentication failed");
         }
       }
     } catch (error: any) {
-      onError(error.message || "Authentication failed")
+      onError(error.message || "Authentication failed");
     } finally {
-      setAuthenticating(false)
+      setAuthenticating(false);
     }
-  }
+  };
 
-  if (!visible) return null
+  if (!visible) return null;
 
   return (
     <Modal visible={visible} transparent animationType="fade">
@@ -99,7 +101,9 @@ export default function BiometricPrompt({
               </View>
               {capabilities && (
                 <Text style={styles.biometricType}>
-                  {BiometricService.getBiometricTypeString(capabilities.supportedTypes)}
+                  {BiometricService.getBiometricTypeString(
+                    capabilities.supportedTypes
+                  )}
                 </Text>
               )}
             </View>
@@ -109,24 +113,39 @@ export default function BiometricPrompt({
               <Button
                 title={authenticating ? "Authenticating..." : "Authenticate"}
                 onPress={handleAuthenticate}
-                disabled={authenticating || !capabilities?.hasHardware || !capabilities?.isEnrolled}
+                disabled={
+                  authenticating ||
+                  !capabilities?.hasHardware ||
+                  !capabilities?.isEnrolled
+                }
                 style={styles.authButton}
               />
-              <Button title="Cancel" variant="secondary" onPress={onCancel} style={styles.cancelButton} />
+              <Button
+                title="Cancel"
+                variant="secondary"
+                onPress={onCancel}
+                style={styles.cancelButton}
+              />
             </View>
 
             {/* Status */}
             {capabilities && !capabilities.hasHardware && (
-              <Text style={styles.errorText}>Biometric hardware not available</Text>
+              <Text style={styles.errorText}>
+                Biometric hardware not available
+              </Text>
             )}
-            {capabilities && capabilities.hasHardware && !capabilities.isEnrolled && (
-              <Text style={styles.errorText}>No biometric credentials enrolled</Text>
-            )}
+            {capabilities &&
+              capabilities.hasHardware &&
+              !capabilities.isEnrolled && (
+                <Text style={styles.errorText}>
+                  No biometric credentials enrolled
+                </Text>
+              )}
           </View>
         </Card>
       </View>
     </Modal>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -198,4 +217,4 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 16,
   },
-})
+});

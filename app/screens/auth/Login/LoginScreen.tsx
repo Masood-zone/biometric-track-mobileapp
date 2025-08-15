@@ -1,50 +1,57 @@
-"use client"
-
-import { useState } from "react"
+import { useState } from "react";
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
   Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-} from "react-native"
-import { useAuth } from "../../../contexts/auth/AuthContext"
-import { colors } from "../../../constants/colors"
-import LoadingSpinner from "../../../components/LoadingSpinner"
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import LoadingSpinner from "../../../components/LoadingSpinner";
+import { colors } from "../../../constants/colors";
+import { useAuth } from "../../../contexts/auth/AuthContext";
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert("Error", "Please fill in all fields")
-      return
+      Alert.alert("Error", "Please fill in all fields");
+      return;
     }
 
     try {
-      setLoading(true)
-      await login(email.trim(), password)
+      setLoading(true);
+      await login(email.trim(), password);
     } catch (error: any) {
-      Alert.alert("Login Failed", error.message || "An error occurred during login")
+      Alert.alert(
+        "Login Failed",
+        error.message || "An error occurred during login"
+      );
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   if (loading) {
-    return <LoadingSpinner />
+    return <LoadingSpinner />;
   }
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.content}>
           {/* Header */}
           <View style={styles.header}>
@@ -82,19 +89,25 @@ export default function LoginScreen() {
               />
             </View>
 
-            <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
+            <TouchableOpacity
+              style={styles.loginButton}
+              onPress={handleLogin}
+              disabled={loading}
+            >
               <Text style={styles.loginButtonText}>Sign In</Text>
             </TouchableOpacity>
           </View>
 
           {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Contact your administrator for account access</Text>
+            <Text style={styles.footerText}>
+              Contact your administrator for account access
+            </Text>
           </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -170,4 +183,4 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 20,
   },
-})
+});
