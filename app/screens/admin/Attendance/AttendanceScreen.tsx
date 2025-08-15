@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   FlatList,
@@ -30,21 +30,21 @@ export default function AttendanceScreen() {
   const [loading, setLoading] = useState(true);
   const { getAttendanceByDate } = useAttendance();
 
-  useEffect(() => {
-    fetchAttendance();
-  }, [selectedDate]);
-
-  const fetchAttendance = async () => {
+  const fetchAttendance = useCallback(async () => {
     try {
       setLoading(true);
       const records = await getAttendanceByDate(selectedDate);
       setAttendanceRecords(records);
-    } catch (error) {
+    } catch {
       Alert.alert("Error", "Failed to fetch attendance records");
     } finally {
       setLoading(false);
     }
-  };
+  }, [getAttendanceByDate, selectedDate]);
+
+  useEffect(() => {
+    fetchAttendance();
+  }, [selectedDate, fetchAttendance]);
 
   const getDateOptions = () => {
     const dates = [];
@@ -61,6 +61,7 @@ export default function AttendanceScreen() {
 
     return dates;
   };
+  console.log("Attendance Records:", attendanceRecords);
 
   const renderAttendanceRecord = ({ item }: { item: AttendanceRecord }) => (
     <Card style={styles.recordCard}>

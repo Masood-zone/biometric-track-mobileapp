@@ -1,5 +1,6 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import Feather from "react-native-vector-icons/Feather";
 import { AttendanceProvider } from "./app/contexts/attendance/AttendanceContext";
 import { AuthProvider, useAuth } from "./app/contexts/auth/AuthContext";
 
@@ -17,15 +18,30 @@ const Tab = createBottomTabNavigator();
 function AdminTabs() {
   return (
     <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
+      screenOptions={({ route }) => ({
+        headerShown: true,
+        headerShadowVisible: false,
+        headerStyle: {
+          borderBottomWidth: 1,
+        },
         tabBarStyle: {
           backgroundColor: "#1f2937",
           borderTopColor: "#374151",
         },
         tabBarActiveTintColor: "#3b82f6",
         tabBarInactiveTintColor: "#9ca3af",
-      }}
+        tabBarIcon: ({ color, size }) => {
+          let iconName = "";
+          if (route.name === "School") iconName = "users";
+          else if (route.name === "Attendance") iconName = "check-square";
+          else if (route.name === "Profile") iconName = "user";
+          return <Feather name={iconName} size={size} color={color} />;
+        },
+        title:
+          route.name === "School"
+            ? "Biometric Track App"
+            : "Biometric Track App",
+      })}
     >
       <Tab.Screen
         name="School"
@@ -49,7 +65,7 @@ function AdminTabs() {
 function TeacherTabs() {
   return (
     <Tab.Navigator
-      screenOptions={{
+      screenOptions={({ route }) => ({
         headerShown: false,
         tabBarStyle: {
           backgroundColor: "#1f2937",
@@ -57,7 +73,13 @@ function TeacherTabs() {
         },
         tabBarActiveTintColor: "#10b981",
         tabBarInactiveTintColor: "#9ca3af",
-      }}
+        tabBarIcon: ({ color, size }) => {
+          let iconName = "";
+          if (route.name === "Attendance") iconName = "check-square";
+          else if (route.name === "Profile") iconName = "user";
+          return <Feather name={iconName} size={size} color={color} />;
+        },
+      })}
     >
       <Tab.Screen
         name="Attendance"
