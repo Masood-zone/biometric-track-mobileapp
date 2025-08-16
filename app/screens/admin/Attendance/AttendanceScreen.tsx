@@ -61,7 +61,6 @@ export default function AttendanceScreen() {
 
     return dates;
   };
-  console.log("Attendance Records:", attendanceRecords);
 
   const renderAttendanceRecord = ({ item }: { item: AttendanceRecord }) => (
     <Card style={styles.recordCard}>

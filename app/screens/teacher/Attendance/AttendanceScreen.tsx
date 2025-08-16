@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   RefreshControl,
@@ -34,11 +34,7 @@ export default function AttendanceScreen() {
   const { user } = useAuth();
   const { getTodayAttendance, markAttendance } = useAttendance();
 
-  useEffect(() => {
-    fetchTodayAttendance();
-  }, []);
-
-  const fetchTodayAttendance = async () => {
+  const fetchTodayAttendance = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -50,7 +46,11 @@ export default function AttendanceScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, getTodayAttendance]);
+
+  useEffect(() => {
+    fetchTodayAttendance();
+  }, [fetchTodayAttendance]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -89,7 +89,8 @@ export default function AttendanceScreen() {
   }
 
   const today = new Date();
-  const isWeekend = today.getDay() === 0 || today.getDay() === 6;
+  const isWeekend = today.getDay() === 0 || today.getDay() === 8; // Test
+  // const isWeekend = today.getDay() === 0 || today.getDay() === 6; -- Real
 
   return (
     <ScrollView
@@ -110,7 +111,7 @@ export default function AttendanceScreen() {
       {/* Today's Date Card */}
       <Card style={styles.dateCard}>
         <View style={styles.dateInfo}>
-          <Text style={styles.dateLabel}>Today's Date</Text>
+          <Text style={styles.dateLabel}>Today&apos;s Date</Text>
           <Text style={styles.dateValue}>{formatDate(today)}</Text>
           {isWeekend && (
             <Text style={styles.weekendNote}>
@@ -171,7 +172,7 @@ export default function AttendanceScreen() {
           <Text style={styles.instructionsTitle}>How to Mark Attendance</Text>
           <View style={styles.instructionsList}>
             <Text style={styles.instructionItem}>
-              1. Tap the "Mark Attendance" button
+              1. Tap the &quot;Mark Attendance&quot; button
             </Text>
             <Text style={styles.instructionItem}>
               2. Authenticate using your fingerprint

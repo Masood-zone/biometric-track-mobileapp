@@ -59,7 +59,7 @@ export default function SchoolScreen() {
       });
 
       setTeachers(teachersList);
-    } catch (error) {
+    } catch {
       Alert.alert("Error", "Failed to fetch teachers");
     } finally {
       setLoading(false);

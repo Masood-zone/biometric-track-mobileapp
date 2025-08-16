@@ -1,25 +1,13 @@
-import App from "@/App";
-// import { StyleSheet, Text, View } from "react-native";
+import AppNavigator from "@/App";
+import { AttendanceProvider } from "./contexts/attendance/AttendanceContext";
+import { AuthProvider } from "./contexts/auth/AuthContext";
 
 export default function HomeScreen() {
-  return <App />;
+  return (
+    <AuthProvider>
+      <AttendanceProvider>
+        <AppNavigator />
+      </AttendanceProvider>
+    </AuthProvider>
+  );
 }
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     alignItems: "center",
-//     justifyContent: "center",
-//     padding: 24,
-//     backgroundColor: "#fff",
-//   },
-//   title: {
-//     fontSize: 24,
-//     fontWeight: "bold",
-//     marginBottom: 12,
-//   },
-//   subtitle: {
-//     fontSize: 16,
-//     color: "#666",
-//   },
-// });

@@ -1,8 +1,8 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Feather from "react-native-vector-icons/Feather";
-import { AttendanceProvider } from "./app/contexts/attendance/AttendanceContext";
-import { AuthProvider, useAuth } from "./app/contexts/auth/AuthContext";
+// import { AttendanceProvider } from "./app/contexts/attendance/AttendanceContext";
+import { useAuth } from "./app/contexts/auth/AuthContext";
 
 // Import screens
 import AdminAttendanceScreen from "./app/screens/admin/Attendance/AttendanceScreen";
@@ -95,7 +95,7 @@ function TeacherTabs() {
   );
 }
 
-function AppNavigator() {
+export default function AppNavigator() {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -108,19 +108,19 @@ function AppNavigator() {
         <Stack.Screen name="Login" component={LoginScreen} />
       ) : user.role === "admin" ? (
         <Stack.Screen name="AdminTabs" component={AdminTabs} />
-      ) : (
+      ) : user.role === "teacher" ? (
         <Stack.Screen name="TeacherTabs" component={TeacherTabs} />
-      )}
+      ) : null}
     </Stack.Navigator>
   );
 }
 
-export default function App() {
-  return (
-    <AuthProvider>
-      <AttendanceProvider>
-        <AppNavigator />
-      </AttendanceProvider>
-    </AuthProvider>
-  );
-}
+// export default function App() {
+//   return (
+//     <AuthProvider>
+//       <AttendanceProvider>
+//         <AppNavigator />
+//       </AttendanceProvider>
+//     </AuthProvider>
+//   );
+// }
