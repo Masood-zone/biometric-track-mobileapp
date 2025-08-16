@@ -1,5 +1,13 @@
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
+import { initializeApp } from "firebase/app";
+import { createUserWithEmailAndPassword, getAuth } from "firebase/auth";
+import {
+  collection,
+  doc,
+  getDocs,
+  query,
+  setDoc,
+  where,
+} from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -16,7 +24,15 @@ import Card from "../../../components/Card";
 import FormInput from "../../../components/FormInput";
 import LoadingSpinner from "../../../components/LoadingSpinner";
 import { colors } from "../../../constants/colors";
-import { auth, db } from "../../../services/firebase";
+import { db, firebaseConfig } from "../../../services/firebase";
+// Create a secondary Firebase app instance for admin user creation
+let secondaryApp: any = null;
+function getSecondaryAuth() {
+  if (!secondaryApp) {
+    secondaryApp = initializeApp(firebaseConfig, "Secondary");
+  }
+  return getAuth(secondaryApp);
+}
 
 interface Teacher {
   id: string;
@@ -32,6 +48,8 @@ export default function SchoolScreen() {
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [addingTeacher, setAddingTeacher] = useState(false);
+  const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
+  const [deletingTeacher, setDeletingTeacher] = useState<Teacher | null>(null);
 
   // Form state
   const [name, setName] = useState("");
@@ -66,13 +84,13 @@ export default function SchoolScreen() {
     }
   };
 
-  const handleAddTeacher = async () => {
+  const handleAddOrEditTeacher = async () => {
     if (
       !name.trim() ||
       !email.trim() ||
       !phone.trim() ||
       !subject.trim() ||
-      !password.trim()
+      (!editingTeacher && !password.trim())
     ) {
       Alert.alert("Error", "Please fill in all fields");
       return;
@@ -80,25 +98,41 @@ export default function SchoolScreen() {
 
     try {
       setAddingTeacher(true);
+      if (editingTeacher) {
+        // Edit teacher in Firestore
+        await setDoc(doc(db, "users", editingTeacher.id), {
+          ...editingTeacher,
+          name: name.trim(),
+          email: email.trim(),
+          phone: phone.trim(),
+          subject: subject.trim(),
+        });
+        Alert.alert("Success", "Teacher updated successfully");
+      } else {
+        // Create Firebase Auth account using secondary app
+        const secondaryAuth = getSecondaryAuth();
+        const userCredential = await createUserWithEmailAndPassword(
+          secondaryAuth,
+          email.trim(),
+          password
+        );
+        const user = userCredential.user;
 
-      // Create Firebase Auth account
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email.trim(),
-        password
-      );
-      const user = userCredential.user;
+        // Add teacher to Firestore with UID as document ID
+        await setDoc(doc(db, "users", user.uid), {
+          uid: user.uid,
+          name: name.trim(),
+          email: email.trim(),
+          phone: phone.trim(),
+          subject: subject.trim(),
+          role: "teacher",
+          createdAt: new Date(),
+        });
 
-      // Add teacher to Firestore
-      await addDoc(collection(db, "users"), {
-        uid: user.uid,
-        name: name.trim(),
-        email: email.trim(),
-        phone: phone.trim(),
-        subject: subject.trim(),
-        role: "teacher",
-        createdAt: new Date(),
-      });
+        // Sign out from secondary app to keep admin logged in
+        await secondaryAuth.signOut();
+        Alert.alert("Success", "Teacher added successfully");
+      }
 
       // Reset form
       setName("");
@@ -107,15 +141,39 @@ export default function SchoolScreen() {
       setSubject("");
       setPassword("");
       setModalVisible(false);
+      setEditingTeacher(null);
 
       // Refresh teachers list
       await fetchTeachers();
-
-      Alert.alert("Success", "Teacher added successfully");
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to add teacher");
+      Alert.alert("Error", error.message || "Failed to add/update teacher");
     } finally {
       setAddingTeacher(false);
+    }
+  };
+
+  const handleEditTeacher = (teacher: Teacher) => {
+    setEditingTeacher(teacher);
+    setName(teacher.name);
+    setEmail(teacher.email);
+    setPhone(teacher.phone);
+    setSubject(teacher.subject);
+    setPassword("");
+    setModalVisible(true);
+  };
+
+  const handleDeleteTeacher = async () => {
+    if (!deletingTeacher) return;
+    try {
+      setLoading(true);
+      await setDoc(doc(db, "users", deletingTeacher.id), {}, { merge: false }); // Clear doc
+      await fetchTeachers();
+      setDeletingTeacher(null);
+      Alert.alert("Success", "Teacher deleted successfully");
+    } catch (error: any) {
+      Alert.alert("Error", error.message || "Failed to delete teacher");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -126,6 +184,28 @@ export default function SchoolScreen() {
         <Text style={styles.teacherEmail}>{item.email}</Text>
         <Text style={styles.teacherDetails}>Subject: {item.subject}</Text>
         <Text style={styles.teacherDetails}>Phone: {item.phone}</Text>
+      </View>
+      <View style={{ flexDirection: "row", gap: 12, marginTop: 8 }}>
+        <TouchableOpacity
+          style={{
+            padding: 6,
+            backgroundColor: colors.primary,
+            borderRadius: 6,
+          }}
+          onPress={() => handleEditTeacher(item)}
+        >
+          <Text style={{ color: "white", fontWeight: "600" }}>Edit</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{
+            padding: 6,
+            backgroundColor: colors.danger,
+            borderRadius: 6,
+          }}
+          onPress={() => setDeletingTeacher(item)}
+        >
+          <Text style={{ color: "white", fontWeight: "600" }}>Delete</Text>
+        </TouchableOpacity>
       </View>
     </Card>
   );
@@ -172,8 +252,15 @@ export default function SchoolScreen() {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Add New Teacher</Text>
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
+            <Text style={styles.modalTitle}>
+              {editingTeacher ? "Edit Teacher" : "Add New Teacher"}
+            </Text>
+            <TouchableOpacity
+              onPress={() => {
+                setModalVisible(false);
+                setEditingTeacher(null);
+              }}
+            >
               <Text style={styles.cancelButton}>Cancel</Text>
             </TouchableOpacity>
           </View>
@@ -193,6 +280,7 @@ export default function SchoolScreen() {
               placeholder="Enter email address"
               keyboardType="email-address"
               autoCapitalize="none"
+              editable={!editingTeacher}
             />
 
             <FormInput
@@ -210,21 +298,82 @@ export default function SchoolScreen() {
               placeholder="Enter subject taught"
             />
 
-            <FormInput
-              label="Password"
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Enter temporary password"
-              secureTextEntry
-            />
+            {!editingTeacher && (
+              <FormInput
+                label="Password"
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Enter temporary password"
+                secureTextEntry
+              />
+            )}
 
             <Button
-              title={addingTeacher ? "Adding Teacher..." : "Add Teacher"}
-              onPress={handleAddTeacher}
+              title={
+                addingTeacher
+                  ? editingTeacher
+                    ? "Updating..."
+                    : "Adding Teacher..."
+                  : editingTeacher
+                  ? "Update Teacher"
+                  : "Add Teacher"
+              }
+              onPress={handleAddOrEditTeacher}
               disabled={addingTeacher}
               style={styles.submitButton}
             />
           </ScrollView>
+        </View>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        visible={!!deletingTeacher}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDeletingTeacher(null)}
+      >
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "rgba(0,0,0,0.3)",
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "white",
+              padding: 24,
+              borderRadius: 12,
+              width: 300,
+            }}
+          >
+            <Text style={{ fontSize: 18, fontWeight: "600", marginBottom: 16 }}>
+              Delete Teacher
+            </Text>
+            <Text style={{ fontSize: 15, marginBottom: 24 }}>
+              Are you sure you want to delete {deletingTeacher?.name}?
+            </Text>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "flex-end",
+                gap: 16,
+              }}
+            >
+              <TouchableOpacity onPress={() => setDeletingTeacher(null)}>
+                <Text style={{ color: colors.text.primary, fontWeight: "600" }}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleDeleteTeacher}>
+                <Text style={{ color: colors.danger, fontWeight: "600" }}>
+                  Delete
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </Modal>
     </View>
