@@ -25,17 +25,4 @@ export const auth = initializeAuth(app);
 // Initialize Firestore
 export const db = getFirestore(app);
 
-// Connect to Firestore emulator in development
-// if (__DEV__ && process.env.EXPO_PUBLIC_USE_FIREBASE_EMULATOR === "true") {
-//   const EMULATOR_HOST = process.env.EXPO_PUBLIC_FIREBASE_EMULATOR_HOST || "localhost"
-//   const FIRESTORE_PORT = process.env.EXPO_PUBLIC_FIRESTORE_EMULATOR_PORT || "8080"
-
-//   try {
-//     connectFirestoreEmulator(db, EMULATOR_HOST, Number.parseInt(FIRESTORE_PORT))
-//     console.log("Connected to Firestore emulator")
-//   } catch (error) {
-//     console.warn("Failed to connect to Firestore emulator:", error)
-//   }
-// }
-
 export default app;
